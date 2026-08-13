@@ -3,20 +3,17 @@
 // ======================================================
 
 
-// ------------------------------------------------------
-// 1. Selecionamos o formulário.
-//
-// Será utilizado para capturar novas transações.
-// ------------------------------------------------------
+// ======================================================
+// 1. ELEMENTOS DA INTERFACE
+// ======================================================
 
+
+// Formulário principal.
 const transactionForm =
     document.getElementById("transactionForm");
 
 
-// ------------------------------------------------------
-// 2. Selecionamos os elementos do resumo financeiro.
-// ------------------------------------------------------
-
+// Elementos do resumo financeiro.
 const balanceElement =
     document.getElementById("balance");
 
@@ -27,25 +24,37 @@ const expenseElement =
     document.getElementById("expense");
 
 
-// ------------------------------------------------------
-// 3. Selecionamos a área onde as transações serão
-//    exibidas.
-// ------------------------------------------------------
-
+// Lista onde as transações serão exibidas.
 const transactionList =
     document.getElementById("transactionList");
 
 
-// ------------------------------------------------------
-// 4. Recuperamos as transações armazenadas.
+// Botão principal do formulário.
+const submitButton =
+    document.getElementById("submitButton");
+
+
+// Botão utilizado para cancelar uma edição.
+const cancelEditButton =
+    document.getElementById("cancelEditButton");
+
+
+// Mensagem do formulário.
+const formMessage =
+    document.getElementById("formMessage");
+
+
+// ======================================================
+// 2. ESTADO DA APLICAÇÃO
+// ======================================================
+
+
+// Recuperamos as transações armazenadas.
 //
-// localStorage retorna uma string.
+// JSON.parse() transforma o texto armazenado no
+// localStorage novamente em um array JavaScript.
 //
-// JSON.parse() converte essa string para um array.
-//
-// Se não existir nenhuma transação, utilizamos []
-// como valor inicial.
-// ------------------------------------------------------
+// Se não existir nada, começamos com um array vazio.
 
 let transactions = JSON.parse(
     localStorage.getItem("transactions")
@@ -53,111 +62,55 @@ let transactions = JSON.parse(
 
 
 // ------------------------------------------------------
-// 5. Evento de envio do formulário.
+// Guarda o ID da transação que está sendo editada.
+//
+// null significa:
+//
+// "não estamos editando nenhuma transação".
+//
+// Quando o usuário clicar em Editar, essa variável
+// receberá o ID correspondente.
 // ------------------------------------------------------
 
-transactionForm.addEventListener(
-    "submit",
-    function (event) {
-
-        // Impede o recarregamento da página.
-        event.preventDefault();
-
-
-        // --------------------------------------------------
-        // Capturamos os valores digitados.
-        // --------------------------------------------------
-
-        const type =
-            document.getElementById("type").value;
-
-        const category =
-            document.getElementById("category").value;
-
-        const description =
-            document.getElementById("description")
-                .value
-                .trim();
-
-        const amount =
-            Number(
-                document.getElementById("amount").value
-            );
-
-        const date =
-            document.getElementById("date").value;
-
-
-        // --------------------------------------------------
-        // Criamos o objeto da transação.
-        // --------------------------------------------------
-
-        const transaction = {
-
-            // ID único para identificar a transação.
-            id: Date.now(),
-
-            type: type,
-
-            category: category,
-
-            description: description,
-
-            amount: amount,
-
-            date: date
-        };
-
-
-        // --------------------------------------------------
-        // Adicionamos a nova transação ao array.
-        // --------------------------------------------------
-
-        transactions.push(transaction);
-
-
-        // --------------------------------------------------
-        // Salvamos o array atualizado no localStorage.
-        // --------------------------------------------------
-
-        localStorage.setItem(
-            "transactions",
-            JSON.stringify(transactions)
-        );
-
-
-        // --------------------------------------------------
-        // Atualizamos a interface.
-        // --------------------------------------------------
-
-        renderTransactions();
-
-        updateSummary();
-
-
-        // --------------------------------------------------
-        // Limpamos o formulário.
-        // --------------------------------------------------
-
-        transactionForm.reset();
-
-    }
-);
+let editingTransactionId = null;
 
 
 // ======================================================
-// FUNÇÃO: formatCurrency
+// 3. CATEGORIAS
 // ======================================================
-//
-// Converte um número para o formato de moeda brasileira.
+
+
+// Os valores armazenados são códigos.
 //
 // Exemplo:
 //
-// 1500
-// ↓
-// R$ 1.500,00
+// "food" → "Alimentação"
 //
+// Isso permite separar o valor utilizado pela aplicação
+// do texto apresentado ao usuário.
+
+const categoryLabels = {
+
+    salary: "Salário",
+
+    food: "Alimentação",
+
+    transport: "Transporte",
+
+    housing: "Moradia",
+
+    education: "Educação",
+
+    leisure: "Lazer",
+
+    other: "Outros"
+};
+
+
 // ======================================================
+// 4. FORMATAÇÃO DE MOEDA
+// ======================================================
+
 
 function formatCurrency(value) {
 
@@ -172,22 +125,378 @@ function formatCurrency(value) {
 
 
 // ======================================================
-// FUNÇÃO: renderTransactions
+// 5. SALVAR TRANSAÇÕES
 // ======================================================
 //
-// Responsável por mostrar as transações na tela.
+// Centralizamos a operação de persistência.
+//
+// Sempre que transactions for alterado, chamaremos
+// esta função para atualizar o localStorage.
 // ======================================================
+
+function saveTransactions() {
+
+    localStorage.setItem(
+        "transactions",
+        JSON.stringify(transactions)
+    );
+}
+
+
+// ======================================================
+// 6. ADICIONAR TRANSAÇÃO
+// ======================================================
+
+
+function addTransaction() {
+
+    // Capturamos os valores do formulário.
+    const type =
+        document.getElementById("type").value;
+
+    const category =
+        document.getElementById("category").value;
+
+    const description =
+        document
+            .getElementById("description")
+            .value
+            .trim();
+
+    const amount =
+        Number(
+            document.getElementById("amount").value
+        );
+
+    const date =
+        document.getElementById("date").value;
+
+
+    // Criamos o objeto da transação.
+    const transaction = {
+
+        // Date.now() gera um identificador baseado
+        // no momento da criação.
+        id: Date.now(),
+
+        type: type,
+
+        category: category,
+
+        description: description,
+
+        amount: amount,
+
+        date: date
+    };
+
+
+    // Adicionamos ao array.
+    transactions.push(transaction);
+
+
+    // Salvamos no localStorage.
+    saveTransactions();
+
+
+    // Atualizamos a interface.
+    renderTransactions();
+
+    updateSummary();
+
+
+    // Limpamos o formulário.
+    transactionForm.reset();
+
+
+    // Informamos o resultado.
+    formMessage.textContent =
+        "Transação adicionada com sucesso.";
+}
+
+
+// ======================================================
+// 7. EDITAR TRANSAÇÃO
+// ======================================================
+
+
+function editTransaction(id) {
+
+    // Procuramos a transação pelo ID.
+    const transaction = transactions.find(
+        function (transaction) {
+
+            return transaction.id === id;
+
+        }
+    );
+
+
+    // Se não encontrarmos a transação,
+    // encerramos a função.
+    if (!transaction) {
+        return;
+    }
+
+
+    // --------------------------------------------------
+    // Preenchemos o formulário com os dados existentes.
+    // --------------------------------------------------
+
+    document.getElementById("type").value =
+        transaction.type;
+
+    document.getElementById("category").value =
+        transaction.category;
+
+    document.getElementById("description").value =
+        transaction.description;
+
+    document.getElementById("amount").value =
+        transaction.amount;
+
+    document.getElementById("date").value =
+        transaction.date;
+
+
+    // --------------------------------------------------
+    // Guardamos o ID da transação que está sendo editada.
+    // --------------------------------------------------
+
+    editingTransactionId = id;
+
+
+    // --------------------------------------------------
+    // Alteramos a interface para deixar claro que
+    // estamos no modo de edição.
+    // --------------------------------------------------
+
+    submitButton.textContent =
+        "Salvar alteração";
+
+    cancelEditButton.hidden = false;
+
+    formMessage.textContent =
+        "Editando transação.";
+
+
+    // Levamos o usuário até o formulário.
+    transactionForm.scrollIntoView({
+        behavior: "smooth"
+    });
+}
+
+
+// ======================================================
+// 8. SALVAR ALTERAÇÃO
+// ======================================================
+
+
+function updateTransaction() {
+
+    // Procuramos o índice da transação.
+    //
+    // findIndex() retorna a posição do elemento
+    // dentro do array.
+
+    const transactionIndex =
+        transactions.findIndex(
+            function (transaction) {
+
+                return (
+                    transaction.id ===
+                    editingTransactionId
+                );
+
+            }
+        );
+
+
+    // Se não encontramos, encerramos.
+    if (transactionIndex === -1) {
+        return;
+    }
+
+
+    // Capturamos os novos valores.
+
+    const type =
+        document.getElementById("type").value;
+
+    const category =
+        document.getElementById("category").value;
+
+    const description =
+        document
+            .getElementById("description")
+            .value
+            .trim();
+
+    const amount =
+        Number(
+            document.getElementById("amount").value
+        );
+
+    const date =
+        document.getElementById("date").value;
+
+
+    // --------------------------------------------------
+    // Atualizamos somente a transação correspondente.
+    // --------------------------------------------------
+
+    transactions[transactionIndex] = {
+
+        id: editingTransactionId,
+
+        type: type,
+
+        category: category,
+
+        description: description,
+
+        amount: amount,
+
+        date: date
+    };
+
+
+    // Salvamos a alteração.
+    saveTransactions();
+
+
+    // Atualizamos a interface.
+    renderTransactions();
+
+    updateSummary();
+
+
+    // Voltamos para o modo normal.
+    resetEditMode();
+
+
+    formMessage.textContent =
+        "Transação atualizada com sucesso.";
+}
+
+
+// ======================================================
+// 9. EXCLUIR TRANSAÇÃO
+// ======================================================
+
+
+function deleteTransaction(id) {
+
+    // Localizamos a transação antes de excluir.
+    const transaction = transactions.find(
+        function (transaction) {
+
+            return transaction.id === id;
+
+        }
+    );
+
+
+    if (!transaction) {
+        return;
+    }
+
+
+    // --------------------------------------------------
+    // Pedimos confirmação antes de excluir.
+    //
+    // confirm() retorna:
+    //
+    // true  → usuário confirmou
+    // false → usuário cancelou
+    // --------------------------------------------------
+
+    const confirmed = confirm(
+        `Deseja excluir "${transaction.description}"?`
+    );
+
+
+    // Se o usuário cancelou, não fazemos nada.
+    if (!confirmed) {
+        return;
+    }
+
+
+    // --------------------------------------------------
+    // filter() cria um novo array contendo todos os
+    // elementos, EXCETO aquele que possui o ID informado.
+    // --------------------------------------------------
+
+    transactions = transactions.filter(
+        function (transaction) {
+
+            return transaction.id !== id;
+
+        }
+    );
+
+
+    // Salvamos o novo array.
+    saveTransactions();
+
+
+    // Atualizamos a interface.
+    renderTransactions();
+
+    updateSummary();
+
+
+    // Se a transação excluída estava sendo editada,
+    // cancelamos o modo de edição.
+    if (editingTransactionId === id) {
+
+        resetEditMode();
+
+    }
+
+
+    formMessage.textContent =
+        "Transação excluída com sucesso.";
+}
+
+
+// ======================================================
+// 10. CANCELAR EDIÇÃO
+// ======================================================
+
+
+function resetEditMode() {
+
+    // Voltamos ao estado inicial.
+    editingTransactionId = null;
+
+
+    // Restauramos o texto do botão.
+    submitButton.textContent =
+        "Adicionar transação";
+
+
+    // Escondemos o botão cancelar.
+    cancelEditButton.hidden = true;
+
+
+    // Limpamos os campos.
+    transactionForm.reset();
+}
+
+
+// ======================================================
+// 11. RENDERIZAR TRANSAÇÕES
+// ======================================================
+
 
 function renderTransactions() {
 
-    // Limpamos a lista antes de reconstruí-la.
+    // Limpamos a lista antes de renderizar novamente.
     transactionList.innerHTML = "";
 
 
-    // --------------------------------------------------
-    // Se não houver transações, mostramos uma mensagem.
-    // --------------------------------------------------
-
+    // Se não houver transações...
     if (transactions.length === 0) {
 
         transactionList.innerHTML = `
@@ -200,133 +509,183 @@ function renderTransactions() {
     }
 
 
-    // --------------------------------------------------
     // Percorremos todas as transações.
-    // --------------------------------------------------
+    transactions.forEach(
+        function (transaction) {
 
-    transactions.forEach(function (transaction) {
-
-        // Definimos a classe de acordo com o tipo.
-        const typeClass =
-            transaction.type === "income"
-                ? "transaction-income"
-                : "transaction-expense";
-
-
-        // Definimos o sinal que aparecerá no valor.
-        const signal =
-            transaction.type === "income"
-                ? "+"
-                : "-";
+            // Classe visual baseada no tipo.
+            const typeClass =
+                transaction.type === "income"
+                    ? "transaction-income"
+                    : "transaction-expense";
 
 
-        // Criamos o elemento visual da transação.
-        const transactionElement =
-            document.createElement("div");
-
-        transactionElement.classList.add(
-            "transaction"
-        );
+            // Sinal visual.
+            const signal =
+                transaction.type === "income"
+                    ? "+"
+                    : "-";
 
 
-        // Inserimos o conteúdo da transação.
-        transactionElement.innerHTML = `
+            // Criamos um elemento HTML.
+            const transactionElement =
+                document.createElement("div");
 
-            <div class="transaction-info">
 
-                <strong>
-                    ${transaction.description}
+            transactionElement.classList.add(
+                "transaction"
+            );
+
+
+            // --------------------------------------------------
+            // data-id
+            // --------------------------------------------------
+            //
+            // Armazenamos o ID da transação no elemento HTML.
+            //
+            // Depois podemos descobrir qual transação foi
+            // clicada.
+            // --------------------------------------------------
+
+            transactionElement.dataset.id =
+                transaction.id;
+
+
+            // Inserimos o conteúdo.
+            transactionElement.innerHTML = `
+
+                <div class="transaction-info">
+
+                    <strong>
+                        ${transaction.description}
+                    </strong>
+
+                    <span>
+                        ${
+                            categoryLabels[
+                                transaction.category
+                            ]
+                        }
+                        -
+                        ${transaction.date}
+                    </span>
+
+                </div>
+
+
+                <strong class="${typeClass}">
+                    ${signal}
+                    ${formatCurrency(
+                        transaction.amount
+                    )}
                 </strong>
 
-                <span>
-                    ${transaction.category}
-                    -
-                    ${transaction.date}
-                </span>
 
-            </div>
+                <div class="transaction-actions">
 
-            <strong class="${typeClass}">
-                ${signal}
-                ${formatCurrency(transaction.amount)}
-            </strong>
-
-        `;
+                    <button
+                        type="button"
+                        class="edit-button"
+                        data-action="edit"
+                    >
+                        Editar
+                    </button>
 
 
-        // Adicionamos a transação à lista.
-        transactionList.appendChild(
-            transactionElement
-        );
+                    <button
+                        type="button"
+                        class="delete-button"
+                        data-action="delete"
+                    >
+                        Excluir
+                    </button>
 
-    });
+                </div>
+
+            `;
+
+
+            // Adicionamos a transação na página.
+            transactionList.appendChild(
+                transactionElement
+            );
+
+        }
+    );
 }
 
 
 // ======================================================
-// FUNÇÃO: updateSummary
+// 12. ATUALIZAR RESUMO
 // ======================================================
-//
-// Calcula:
-//
-// - total de receitas
-// - total de despesas
-// - saldo
-//
-// ======================================================
+
 
 function updateSummary() {
 
     // --------------------------------------------------
-    // Calculamos todas as receitas.
+    // Total de receitas.
     // --------------------------------------------------
 
     const totalIncome =
         transactions
-            .filter(function (transaction) {
+            .filter(
+                function (transaction) {
 
-                return transaction.type === "income";
+                    return (
+                        transaction.type ===
+                        "income"
+                    );
 
-            })
-            .reduce(function (total, transaction) {
+                }
+            )
+            .reduce(
+                function (total, transaction) {
 
-                return total + transaction.amount;
+                    return (
+                        total +
+                        transaction.amount
+                    );
 
-            }, 0);
+                },
+                0
+            );
 
 
     // --------------------------------------------------
-    // Calculamos todas as despesas.
+    // Total de despesas.
     // --------------------------------------------------
 
     const totalExpense =
         transactions
-            .filter(function (transaction) {
+            .filter(
+                function (transaction) {
 
-                return transaction.type === "expense";
+                    return (
+                        transaction.type ===
+                        "expense"
+                    );
 
-            })
-            .reduce(function (total, transaction) {
+                }
+            )
+            .reduce(
+                function (total, transaction) {
 
-                return total + transaction.amount;
+                    return (
+                        total +
+                        transaction.amount
+                    );
 
-            }, 0);
+                },
+                0
+            );
 
 
-    // --------------------------------------------------
-    // O saldo é:
-    //
-    // receitas - despesas
-    // --------------------------------------------------
-
+    // Saldo = receitas - despesas.
     const balance =
         totalIncome - totalExpense;
 
 
-    // --------------------------------------------------
-    // Atualizamos os valores na interface.
-    // --------------------------------------------------
-
+    // Atualizamos a interface.
     incomeElement.textContent =
         formatCurrency(totalIncome);
 
@@ -339,11 +698,181 @@ function updateSummary() {
 
 
 // ======================================================
-// INICIALIZAÇÃO
+// 13. EVENTO DO FORMULÁRIO
+// ======================================================
+
+
+transactionForm.addEventListener(
+    "submit",
+    function (event) {
+
+        // Impede o recarregamento da página.
+        event.preventDefault();
+
+
+        // --------------------------------------------------
+        // Validação básica.
+        // --------------------------------------------------
+
+        const type =
+            document.getElementById("type").value;
+
+        const category =
+            document.getElementById("category").value;
+
+        const description =
+            document
+                .getElementById("description")
+                .value
+                .trim();
+
+        const amount =
+            Number(
+                document.getElementById("amount").value
+            );
+
+        const date =
+            document.getElementById("date").value;
+
+
+        // Verificamos se todos os campos foram preenchidos.
+        if (
+            !type ||
+            !category ||
+            !description ||
+            !amount ||
+            !date
+        ) {
+
+            formMessage.textContent =
+                "Preencha todos os campos.";
+
+            return;
+        }
+
+
+        // Valor precisa ser maior que zero.
+        if (amount <= 0) {
+
+            formMessage.textContent =
+                "O valor deve ser maior que zero.";
+
+            return;
+        }
+
+
+        // --------------------------------------------------
+        // Decidimos se vamos criar ou editar.
+        // --------------------------------------------------
+
+        if (editingTransactionId === null) {
+
+            // Nenhuma transação está sendo editada.
+            // Portanto, criamos uma nova.
+
+            addTransaction();
+
+        } else {
+
+            // Existe uma transação em edição.
+            // Portanto, atualizamos essa transação.
+
+            updateTransaction();
+
+        }
+
+    }
+);
+
+
+// ======================================================
+// 14. CANCELAR EDIÇÃO
+// ======================================================
+
+
+cancelEditButton.addEventListener(
+    "click",
+    function () {
+
+        resetEditMode();
+
+        formMessage.textContent =
+            "Edição cancelada.";
+
+    }
+);
+
+
+// ======================================================
+// 15. EVENTOS DOS BOTÕES DE TRANSAÇÃO
 // ======================================================
 //
-// Quando a página é aberta, precisamos carregar
-// os dados que já estavam armazenados.
+// Como os botões Editar e Excluir são criados
+// dinamicamente pelo renderTransactions(),
+// não podemos simplesmente selecioná-los uma única vez.
+//
+// Utilizamos delegação de eventos:
+// escutamos o clique na lista e identificamos
+// qual botão foi pressionado.
+// ======================================================
+
+transactionList.addEventListener(
+    "click",
+    function (event) {
+
+        // Procuramos o botão que recebeu o clique.
+        const button =
+            event.target.closest("button");
+
+
+        // Se o clique não aconteceu em um botão,
+        // não fazemos nada.
+        if (!button) {
+            return;
+        }
+
+
+        // Encontramos a transação correspondente.
+        const transactionElement =
+            button.closest(".transaction");
+
+
+        // Recuperamos o ID armazenado no data-id.
+        const id =
+            Number(
+                transactionElement.dataset.id
+            );
+
+
+        // Descobrimos qual ação foi solicitada.
+        const action =
+            button.dataset.action;
+
+
+        // Executamos a ação correspondente.
+
+        if (action === "edit") {
+
+            editTransaction(id);
+
+        }
+
+
+        if (action === "delete") {
+
+            deleteTransaction(id);
+
+        }
+
+    }
+);
+
+
+// ======================================================
+// 16. INICIALIZAÇÃO
+// ======================================================
+//
+// Quando a página abre, carregamos os dados existentes.
 // ======================================================
 
 renderTransactions();

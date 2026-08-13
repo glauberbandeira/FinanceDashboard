@@ -318,3 +318,49 @@ button:hover {
     }
 
 }
+
+/* =====================================================
+   BOTÃO SECUNDÁRIO
+   ===================================================== */
+
+.secondary-button {
+
+    background: #777;
+
+    margin-top: 10px;
+}
+
+
+/* =====================================================
+   AÇÕES DA TRANSAÇÃO
+   ===================================================== */
+
+.transaction-actions {
+
+    display: flex;
+
+    gap: 8px;
+}
+
+
+.transaction-actions button {
+
+    width: auto;
+
+    margin: 0;
+
+    padding: 8px 12px;
+
+    font-size: 14px;
+}
+
+
+/*
+    O botão de excluir terá uma aparência diferente
+    do botão de editar.
+*/
+
+.delete-button {
+
+    background: #c62828;
+}
