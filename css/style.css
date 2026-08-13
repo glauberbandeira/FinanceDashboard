@@ -364,3 +364,49 @@ button:hover {
 
     background: #c62828;
 }
+
+/* =====================================================
+   FILTROS
+   ===================================================== */
+
+.filters {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+
+    padding: 20px;
+
+    background: #f4f6f8;
+
+    border-radius: 8px;
+}
+
+
+/*
+    No desktop os filtros ficam lado a lado.
+*/
+
+.filters .form-group {
+
+    margin: 0;
+}
+
+
+/* =====================================================
+   RESPONSIVIDADE DOS FILTROS
+   ===================================================== */
+
+@media (max-width: 700px) {
+
+    .filters {
+
+        grid-template-columns: 1fr;
+    }
+
+}
